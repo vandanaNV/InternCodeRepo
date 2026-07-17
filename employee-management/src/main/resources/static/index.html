@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        body.dark { background: #1a1a2e; color: #eee; }
+        body.dark .card { background: #16213e; color: #eee; }
+        body.dark .navbar { background: #0f3460; }
+        body.dark input, body.dark select { background: #1a1a2e; color: #eee; border-color: #444; }
+        body.dark th { background: #0f3460; }
+        body.dark tr:hover { background: #1a1a2e; }
+        .navbar { background: #2c3e50; color: white; padding: 15px 30px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 20px; }
+        .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-bottom: 15px; }
+        body.dark h2 { color: #eee; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        button { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px; }
+        button:hover { background: #34495e; }
+        .btn-red { background: #e74c3c; }
+        .btn-green { background: #27ae60; }
+        .btn-blue { background: #2980b9; }
+        .btn-orange { background: #e67e22; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #2c3e50; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .msg { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .tab-btn { background: #95a5a6; }
+        .tab-btn.active { background: #2c3e50; }
+        .profile-info p { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+        .profile-info span { font-weight: bold; color: #2c3e50; }
+        .divider { border-top: 2px dashed #ddd; margin: 15px 0; }
+        .stat-cards { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { flex: 1; min-width: 180px; text-align: center; border-radius: 10px; padding: 20px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .bell { position: relative; cursor: pointer; font-size: 22px; }
+        .bell-badge { position: absolute; top: -5px; right: -8px; background: red; color: white; border-radius: 50%; font-size: 11px; padding: 1px 5px; }
+        .notif-dropdown { display: none; position: absolute; right: 0; top: 35px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 280px; z-index: 999; padding: 10px; }
+        .notif-dropdown.show { display: block; }
+        .notif-item { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; color: #333; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+        .modal-box { background: white; width: 450px; margin: 60px auto; padding: 30px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        body.dark .modal-box { background: #16213e; }
+        body.dark .notif-dropdown { background: #16213e; }
+        body.dark .notif-item { color: #eee; border-color: #444; }
+        .toggle-dark { cursor: pointer; font-size: 20px; }
+        .last-login { font-size: 12px; color: #aaa; }
+        .punch-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    🏢 Employee Management System
+    <div class="nav-right">
+        <span class="toggle-dark" onclick="toggleDark()" title="Dark Mode">🌙</span>
+        <div class="bell" onclick="toggleNotif()">
+            🔔
+            <span class="bell-badge" id="bellCount">0</span>
+            <div class="notif-dropdown" id="notifDropdown">
+                <b>Notifications</b>
+                <div id="notifList"><div class="notif-item">No notifications</div></div>
+            </div>
+        </div>
+        <span id="navUser"></span>
+        <span class="last-login" id="lastLoginShow"></span>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- LOGIN -->
+    <div id="loginSection" class="card">
+        <h2>🔐 Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <br><a href="#" onclick="showForgotPassword()" style="font-size:13px; color:#2980b9;">Forgot Password?</a>
+        <div id="loginMsg"></div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="forgotSection" class="card" style="display:none">
+        <h2>🔑 Forgot Password</h2>
+        <input type="text" id="forgotUsername" placeholder="Enter your Username">
+        <button class="btn-blue" onclick="sendOTP()">📩 Send OTP</button>
+        <div id="otpBox" style="display:none">
+            <input type="text" id="otpInput" placeholder="Enter OTP">
+            <input type="password" id="newPassInput" placeholder="New Password">
+            <button class="btn-green" onclick="verifyOTP()">✅ Reset Password</button>
+        </div>
+        <button onclick="document.getElementById('forgotSection').style.display='none'; document.getElementById('loginSection').style.display='block'">⬅ Back to Login</button>
+        <div id="forgotMsg"></div>
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="adminSection" style="display:none">
+
+        <!-- STATS -->
+        <div class="stat-cards">
+            <div class="stat-card" style="border-left:5px solid #3498db;">
+                <div style="font-size:32px; font-weight:bold; color:#3498db" id="statTotal">0</div>
+                <div style="color:#666; margin-top:5px">👥 Total Employees</div>
+            </div>
+            <div class="stat-card" style="border-left:5px solid #27ae60;">
+                <div style="font-size:32px; font-weight:bold; color:#27ae60" id="statPresent">0</div>
+                <div style="color:#666; margin-top:5px">✅ Present Today</div>
+            </div>
+            <div class="stat-card" style="border-left:5px solid #e67e22;">
+                <div style="font-size:32px; font-weight:bold; color:#e67e22" id="statLeaves">0</div>
+                <div style="color:#666; margin-top:5px">🏖️ Pending Leaves</div>
+            </div>
+            <div class="stat-card" style="border-left:5px solid #9b59b6;">
+                <div style="font-size:32px; font-weight:bold; color:#9b59b6" id="statDepts">0</div>
+                <div style="color:#666; margin-top:5px">🏢 Departments</div>
+            </div>
+        </div>
+
+        <!-- ADD EMPLOYEE -->
+        <div class="card">
+            <h2>➕ Add Employee</h2>
+            <input type="text" id="name" placeholder="Name">
+            <input type="text" id="department" placeholder="Department">
+            <input type="text" id="designation" placeholder="Designation">
+            <input type="email" id="email" placeholder="Email">
+            <input type="text" id="mobile" placeholder="Mobile Number">
+            <input type="number" id="salary" placeholder="Salary">
+            <input type="date" id="joiningDate">
+            <div class="divider"></div>
+            <p style="color:#2c3e50; font-weight:bold; margin-bottom:5px">🔑 Login Credentials</p>
+            <input type="text" id="newUsername" placeholder="Username (for employee login)">
+            <input type="password" id="newPassword" placeholder="Password (for employee login)">
+            <button class="btn-green" onclick="addEmployee()">Add Employee</button>
+            <div id="addMsg"></div>
+        </div>
+
+        <!-- ALL EMPLOYEES -->
+        <div class="card">
+            <h2>👥 All Employees</h2>
+            <button onclick="loadEmployees()">🔄 Refresh</button>
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Designation</th><th>Email</th><th>Mobile</th><th>Salary</th><th>Action</th></tr></thead>
+                <tbody id="empBody"></tbody>
+            </table>
+        </div>
+
+        <!-- LEAVE APPROVAL -->
+        <div class="card">
+            <h2>📋 Leave Approval</h2>
+            <button onclick="loadPendingLeaves()">🔄 Refresh</button>
+            <table>
+                <thead><tr><th>Emp ID</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="pendingLeaveBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ATTENDANCE ANALYTICS -->
+        <div class="card">
+            <h2>📊 Attendance Analytics</h2>
+            <button onclick="loadAttendanceAnalytics()">🔄 Refresh</button>
+            <table>
+                <thead><tr><th>Emp ID</th><th>Name</th><th>Present</th><th>Absent</th><th>Half Day</th></tr></thead>
+                <tbody id="analyticsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- DEPARTMENT MANAGEMENT -->
+        <div class="card">
+            <h2>🏢 Department Management</h2>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="newDeptName" placeholder="New Department Name" style="width:auto; flex:1;">
+                <button class="btn-green" onclick="addDepartment()">➕ Add</button>
+            </div>
+            <table>
+                <thead><tr><th>Department</th><th>Employees</th><th>Action</th></tr></thead>
+                <tbody id="deptMgmtBody"></tbody>
+            </table>
+        </div>
+
+        <!-- SEARCH BY DEPARTMENT -->
+        <div class="card">
+            <h2>🔍 Search by Department</h2>
+            <input type="text" id="deptSearch" placeholder="Enter Department">
+            <button onclick="searchByDept()">Search</button>
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead>
+                <tbody id="deptBody"></tbody>
+            </table>
+        </div>
+
+        <!-- SALARY FILTER -->
+        <div class="card">
+            <h2>💰 Salary Filter</h2>
+            <input type="number" id="salaryFilter" placeholder="Greater than salary">
+            <button onclick="filterBySalary()">Filter</button>
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Salary</th></tr></thead>
+                <tbody id="salaryBody"></tbody>
+            </table>
+        </div>
+
+        <button class="btn-red" onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <!-- EMPLOYEE SECTION -->
+    <div id="employeeSection" style="display:none">
+        <div class="card">
+            <button class="tab-btn active" onclick="showTab('profile', event)">👤 Profile</button>
+            <button class="tab-btn" onclick="showTab('salary', event)">💰 Salary</button>
+            <button class="tab-btn" onclick="showTab('attendance', event)">📅 Attendance</button>
+            <button class="tab-btn" onclick="showTab('leave', event)">🏖️ Leave</button>
+            <button class="tab-btn" onclick="showTab('changepass', event)">🔒 Change Password</button>
+        </div>
+
+        <!-- PROFILE TAB -->
+        <div id="tab-profile" class="card">
+            <h2>👤 My Profile</h2>
+            <div id="profileData" class="profile-info"></div>
+        </div>
+
+        <!-- SALARY TAB -->
+        <div id="tab-salary" class="card" style="display:none">
+            <h2>💰 My Salary</h2>
+            <div id="salaryData" class="profile-info"></div>
+        </div>
+
+        <!-- ATTENDANCE TAB -->
+        <div id="tab-attendance" class="card" style="display:none">
+            <h2>📅 Attendance</h2>
+            <div class="punch-box">
+                <button class="btn-green" onclick="punchIn()">🟢 Punch In</button>
+                <button class="btn-red" onclick="punchOut()">🔴 Punch Out</button>
+                <span id="punchStatus" style="font-size:14px; color:#666;"></span>
+            </div>
+            <div id="attendanceMsg"></div>
+            <h2 style="margin-top:20px">📋 My Attendance</h2>
+            <button onclick="loadAttendance()">🔄 Refresh</button>
+            <table>
+                <thead><tr><th>Date</th><th>Punch In</th><th>Punch Out</th><th>Status</th></tr></thead>
+                <tbody id="attendanceBody"></tbody>
+            </table>
+        </div>
+
+        <!-- LEAVE TAB -->
+        <div id="tab-leave" class="card" style="display:none">
+            <h2>🏖️ Apply Leave</h2>
+            <input type="date" id="fromDate">
+            <input type="date" id="toDate">
+            <input type="text" id="reason" placeholder="Reason">
+            <button class="btn-blue" onclick="applyLeave()">Apply</button>
+            <div id="leaveMsg"></div>
+            <h2 style="margin-top:20px">📋 My Leaves</h2>
+            <button onclick="loadLeaves()">🔄 Refresh</button>
+            <table>
+                <thead><tr><th>From</th><th>To</th><th>Reason</th><th>Status</th></tr></thead>
+                <tbody id="leaveBody"></tbody>
+            </table>
+            <div id="pendingCount" style="margin-top:10px; font-weight:bold; color:#e67e22;"></div>
+        </div>
+
+        <!-- CHANGE PASSWORD TAB -->
+        <div id="tab-changepass" class="card" style="display:none">
+            <h2>🔒 Change Password</h2>
+            <input type="password" id="oldPass" placeholder="Current Password">
+            <input type="password" id="newPass" placeholder="New Password">
+            <input type="password" id="confirmPass" placeholder="Confirm New Password">
+            <button class="btn-blue" onclick="changePassword()">Update Password</button>
+            <div id="changePassMsg"></div>
+        </div>
+
+        <button class="btn-red" onclick="logout()">🚪 Logout</button>
+    </div>
+</div>
+
+<!-- EDIT EMPLOYEE MODAL -->
+<div id="editModal" class="modal">
+    <div class="modal-box">
+        <h2>✏️ Edit Employee</h2>
+        <input type="hidden" id="editId">
+        <input type="text" id="editName" placeholder="Name">
+        <input type="text" id="editDept" placeholder="Department">
+        <input type="text" id="editDesig" placeholder="Designation">
+        <input type="email" id="editEmail" placeholder="Email">
+        <input type="text" id="editMobile" placeholder="Mobile">
+        <input type="number" id="editSalary" placeholder="Salary">
+        <button class="btn-green" onclick="saveEdit()">💾 Save</button>
+        <button class="btn-red" onclick="document.getElementById('editModal').style.display='none'">✖ Cancel</button>
+        <div id="editMsg"></div>
+    </div>
+</div>
+
+<script>
+    let token = '';
+    let employeeId = '';
+    let role = '';
+    let currentUsername = '';
+    let generatedOTP = '';
+    let departments = JSON.parse(localStorage.getItem('departments') || '["HR","IT","Finance","Marketing"]');
+
+    // DARK MODE
+    function toggleDark() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    }
+    if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+
+    // NOTIFICATION BELL
+    function toggleNotif() {
+        document.getElementById('notifDropdown').classList.toggle('show');
+    }
+    function addNotification(msg) {
+        const list = document.getElementById('notifList');
+        const count = document.getElementById('bellCount');
+        const div = document.createElement('div');
+        div.className = 'notif-item';
+        div.innerText = msg;
+        if(list.innerText.trim() === 'No notifications') list.innerHTML = '';
+        list.prepend(div);
+        count.innerText = parseInt(count.innerText || 0) + 1;
+    }
+
+    // FORGOT PASSWORD
+    function showForgotPassword() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('forgotSection').style.display = 'block';
+    }
+    function sendOTP() {
+        const username = document.getElementById('forgotUsername').value;
+        if(!username) { document.getElementById('forgotMsg').innerHTML = '<div class="msg error">Enter username!</div>'; return; }
+        generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        document.getElementById('otpBox').style.display = 'block';
+        document.getElementById('forgotMsg').innerHTML = '<div class="msg success">OTP sent! (Demo OTP: <b>' + generatedOTP + '</b>)</div>';
+    }
+    function verifyOTP() {
+        const otp = document.getElementById('otpInput').value;
+        const newPass = document.getElementById('newPassInput').value;
+        if(otp === generatedOTP && newPass) {
+            document.getElementById('forgotMsg').innerHTML = '<div class="msg success">✅ Password reset! Please login.</div>';
+            setTimeout(() => {
+                document.getElementById('forgotSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+            }, 1500);
+        } else {
+            document.getElementById('forgotMsg').innerHTML = '<div class="msg error">❌ Wrong OTP!</div>';
+        }
+    }
+
+    // LOGIN
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            const data = await res.json();
+            if(data.token) {
+                token = data.token;
+                role = data.role;
+                currentUsername = username;
+                const prevLogin = localStorage.getItem('lastLogin_' + username) || 'First time';
+                localStorage.setItem('lastLogin_' + username, new Date().toLocaleString());
+                document.getElementById('lastLoginShow').innerText = 'Last login: ' + prevLogin;
+                document.getElementById('loginSection').style.display = 'none';
+                if(role === 'ADMIN') {
+                    document.getElementById('adminSection').style.display = 'block';
+                    document.getElementById('navUser').innerText = '👑 Admin';
+                    loadEmployees();
+                    loadPendingLeaves();
+                } else {
+                    employeeId = data.employeeId;
+                    document.getElementById('employeeSection').style.display = 'block';
+                    document.getElementById('navUser').innerText = '👤 ' + username;
+                    loadProfile();
+                }
+            } else {
+                document.getElementById('loginMsg').innerHTML = '<div class="msg error">❌ Wrong credentials!</div>';
+            }
+        } catch(e) {
+            document.getElementById('loginMsg').innerHTML = '<div class="msg error">❌ Server error!</div>';
+        }
+    }
+
+    // ADD EMPLOYEE
+    async function addEmployee() {
+        const emp = {
+            name: document.getElementById('name').value,
+            department: document.getElementById('department').value,
+            designation: document.getElementById('designation').value,
+            email: document.getElementById('email').value,
+            mobileNumber: document.getElementById('mobile').value,
+            salary: parseFloat(document.getElementById('salary').value),
+            joiningDate: document.getElementById('joiningDate').value
+        };
+        try {
+            const res = await fetch('/api/admin/employees', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify(emp)
+            });
+            if(res.ok) {
+                const savedEmp = await res.json();
+                const username = document.getElementById('newUsername').value;
+                const password = document.getElementById('newPassword').value;
+                if(username && password) {
+                    await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({username, password, employeeId: String(savedEmp.id)})
+                    });
+                }
+                document.getElementById('addMsg').innerHTML = '<div class="msg success">✅ Employee Added!</div>';
+                addNotification('New employee added: ' + emp.name);
+                loadEmployees();
+            } else {
+                const err = await res.text();
+                document.getElementById('addMsg').innerHTML = '<div class="msg error">❌ ' + err + '</div>';
+            }
+        } catch(e) {
+            document.getElementById('addMsg').innerHTML = '<div class="msg error">❌ Server error!</div>';
+        }
+    }
+
+    // LOAD EMPLOYEES + STATS
+    async function loadEmployees() {
+        try {
+            const res = await fetch('/api/admin/employees', {headers: {'Authorization': 'Bearer ' + token}});
+            const data = await res.json();
+            document.getElementById('statTotal').innerText = data.length;
+            const depts = new Set(data.map(e => e.department));
+            document.getElementById('statDepts').innerText = depts.size;
+            let html = '';
+            data.forEach(emp => {
+                html += `<tr>
+                    <td>${emp.id}</td><td>${emp.name}</td><td>${emp.department}</td>
+                    <td>${emp.designation}</td><td>${emp.email}</td><td>${emp.mobileNumber}</td>
+                    <td>₹${emp.salary}</td>
+                    <td>
+                        <button class="btn-blue" onclick='openEdit(${JSON.stringify(emp)})'>✏️ Edit</button>
+                        <button class="btn-red" onclick="deleteEmployee(${emp.id})">🗑️ Delete</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('empBody').innerHTML = html;
+            loadDepartmentManagement(data);
+        } catch(e) { console.log(e); }
+
+        try {
+            const leaveRes = await fetch('/api/admin/leaves/pending', {headers: {'Authorization': 'Bearer ' + token}});
+            if(leaveRes.ok) {
+                const leaves = await leaveRes.json();
+                document.getElementById('statLeaves').innerText = leaves.length;
+            }
+        } catch(e) {}
+
+        try {
+            const todayRes = await fetch('/api/admin/attendance/today', {headers: {'Authorization': 'Bearer ' + token}});
+            if(todayRes.ok) {
+                const todayData = await todayRes.json();
+                document.getElementById('statPresent').innerText = todayData.presentCount || 0;
+            }
+        } catch(e) {}
+    }
+
+    // EDIT EMPLOYEE
+    function openEdit(emp) {
+        document.getElementById('editId').value = emp.id;
+        document.getElementById('editName').value = emp.name;
+        document.getElementById('editDept').value = emp.department;
+        document.getElementById('editDesig').value = emp.designation;
+        document.getElementById('editEmail').value = emp.email;
+        document.getElementById('editMobile').value = emp.mobileNumber;
+        document.getElementById('editSalary').value = emp.salary;
+        document.getElementById('editModal').style.display = 'block';
+    }
+    async function saveEdit() {
+        const id = document.getElementById('editId').value;
+        const emp = {
+            name: document.getElementById('editName').value,
+            department: document.getElementById('editDept').value,
+            designation: document.getElementById('editDesig').value,
+            email: document.getElementById('editEmail').value,
+            mobileNumber: document.getElementById('editMobile').value,
+            salary: parseFloat(document.getElementById('editSalary').value)
+        };
+        const res = await fetch('/api/admin/employees/' + id, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify(emp)
+        });
+        if(res.ok) {
+            document.getElementById('editMsg').innerHTML = '<div class="msg success">✅ Updated!</div>';
+            addNotification('Employee updated: ' + emp.name);
+            setTimeout(() => { document.getElementById('editModal').style.display='none'; loadEmployees(); }, 1000);
+        }
+    }
+
+    // DELETE EMPLOYEE
+    async function deleteEmployee(id) {
+        if(!confirm('Delete this employee?')) return;
+        await fetch('/api/admin/employees/' + id, {method: 'DELETE', headers: {'Authorization': 'Bearer ' + token}});
+        addNotification('Employee deleted (ID: ' + id + ')');
+        loadEmployees();
+    }
+    // LEAVE APPROVAL
+    async function loadPendingLeaves() {
+        try {
+            const res = await fetch('/api/admin/leaves/pending', {headers: {'Authorization': 'Bearer ' + token}});
+            if(res.ok) {
+                const data = await res.json();
+                let html = '';
+                if(data.length === 0) html = '<tr><td colspan="6" style="text-align:center">No pending leaves!</td></tr>';
+                data.forEach(l => {
+                    html += `<tr>
+                        <td>${l.employeeId}</td><td>${l.fromDate}</td><td>${l.toDate}</td>
+                        <td>${l.reason}</td>
+                        <td><span style="color:orange; font-weight:bold">⏳ PENDING</span></td>
+                        <td>
+                            <button class="btn-green" onclick="approveLeave(${l.id})">✅ Approve</button>
+                            <button class="btn-red" onclick="rejectLeave(${l.id})">❌ Reject</button>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById('pendingLeaveBody').innerHTML = html;
+                document.getElementById('statLeaves').innerText = data.length;
+            }
+        } catch(e) {}
+    }
+    async function approveLeave(id) {
+        const res = await fetch('/api/admin/leave/' + id + '/approve', {method: 'PUT', headers: {'Authorization': 'Bearer ' + token}});
+        if(res.ok) { addNotification('Leave approved!'); loadPendingLeaves(); loadEmployees(); }
+    }
+    async function rejectLeave(id) {
+        const res = await fetch('/api/admin/leave/' + id + '/reject', {method: 'PUT', headers: {'Authorization': 'Bearer ' + token}});
+        if(res.ok) { addNotification('Leave rejected!'); loadPendingLeaves(); loadEmployees(); }
+    }
+
+    // ATTENDANCE ANALYTICS
+    async function loadAttendanceAnalytics() {
+        try {
+            const empRes = await fetch('/api/admin/employees', {headers: {'Authorization': 'Bearer ' + token}});
+            const employees = await empRes.json();
+            let html = '';
+            for(const emp of employees) {
+                const res = await fetch('/api/employee/attendance/' + emp.id);
+                const records = await res.json();
+                const present = records.filter(r => r.status === 'PRESENT').length;
+                const absent = records.filter(r => r.status === 'ABSENT').length;
+                const half = records.filter(r => r.status === 'HALF_DAY').length;
+                html += `<tr><td>${emp.id}</td><td>${emp.name}</td>
+                    <td style="color:green">${present}</td>
+                    <td style="color:red">${absent}</td>
+                    <td style="color:orange">${half}</td></tr>`;
+            }
+            document.getElementById('analyticsBody').innerHTML = html || '<tr><td colspan="5" style="text-align:center">No data!</td></tr>';
+        } catch(e) {}
+    }
+
+    // DEPARTMENT MANAGEMENT
+    function loadDepartmentManagement(employees) {
+        const deptCount = {};
+        employees.forEach(e => { deptCount[e.department] = (deptCount[e.department] || 0) + 1; });
+        let html = '';
+        departments.forEach(d => {
+            html += `<tr><td>${d}</td><td>${deptCount[d] || 0}</td>
+            <td><button class="btn-red" onclick="deleteDepartment('${d}')">🗑️ Delete</button></td></tr>`;
+        });
+        document.getElementById('deptMgmtBody').innerHTML = html;
+    }
+    function addDepartment() {
+        const name = document.getElementById('newDeptName').value.trim();
+        if(!name) return;
+        if(!departments.includes(name)) {
+            departments.push(name);
+            localStorage.setItem('departments', JSON.stringify(departments));
+        }
+        document.getElementById('newDeptName').value = '';
+        loadEmployees();
+    }
+    function deleteDepartment(name) {
+        departments = departments.filter(d => d !== name);
+        localStorage.setItem('departments', JSON.stringify(departments));
+        loadEmployees();
+    }
+
+    // SEARCH & FILTER
+    async function searchByDept() {
+        const dept = document.getElementById('deptSearch').value;
+        const res = await fetch('/api/admin/employees/department/' + dept, {headers: {'Authorization': 'Bearer ' + token}});
+        const data = await res.json();
+        let html = '';
+        data.forEach(emp => { html += `<tr><td>${emp.id}</td><td>${emp.name}</td><td>${emp.department}</td><td>₹${emp.salary}</td></tr>`; });
+        document.getElementById('deptBody').innerHTML = html;
+    }
+    async function filterBySalary() {
+        const salary = document.getElementById('salaryFilter').value;
+        const res = await fetch('/api/admin/employees/salary/' + salary, {headers: {'Authorization': 'Bearer ' + token}});
+        const data = await res.json();
+        let html = '';
+        data.forEach(emp => { html += `<tr><td>${emp.id}</td><td>${emp.name}</td><td>₹${emp.salary}</td></tr>`; });
+        document.getElementById('salaryBody').innerHTML = html;
+    }
+
+    // EMPLOYEE TABS
+    function showTab(tab, e) {
+        ['profile','salary','attendance','leave','changepass'].forEach(t => {
+            document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        if(e) e.target.classList.add('active');
+        if(tab === 'salary') loadSalary();
+        if(tab === 'attendance') loadAttendance();
+        if(tab === 'leave') loadLeaves();
+    }
+    // PROFILE
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/employee/profile/' + employeeId);
+            const data = await res.json();
+            document.getElementById('profileData').innerHTML = `
+                <p>🆔 ID: <span>${data.id}</span></p>
+                <p>👤 Name: <span>${data.name}</span></p>
+                <p>🏢 Department: <span>${data.department}</span></p>
+                <p>💼 Designation: <span>${data.designation}</span></p>
+                <p>📧 Email: <span>${data.email}</span></p>
+                <p>📱 Mobile: <span>${data.mobileNumber}</span></p>
+                <p>📅 Joining Date: <span>${data.joiningDate || '-'}</span></p>
+                <div class="divider"></div>
+                <h3 style="margin:10px 0">🎓 Education Details</h3>
+                <p>🏫 10th School: <span>${data.school10 || 'Not Added'}</span></p>
+                <p>📊 10th %: <span>${data.percent10 || '-'}</span></p>
+                <p>🏫 12th School: <span>${data.school12 || 'Not Added'}</span></p>
+                <p>📊 12th %: <span>${data.percent12 || '-'}</span></p>
+                <p>🎓 Degree: <span>${data.degree || 'Not Added'}</span></p>
+                <p>🏛️ College: <span>${data.college || 'Not Added'}</span></p>
+                <p>📊 CGPA: <span>${data.cgpa || '-'}</span></p>
+            `;
+        } catch(e) {}
+    }
+
+    // SALARY
+    async function loadSalary() {
+        try {
+            const res = await fetch('/api/employee/salary/' + employeeId);
+            const data = await res.json();
+            document.getElementById('salaryData').innerHTML = `
+                <p>👤 Name: <span>${data.name}</span></p>
+                <p>💰 Salary: <span>₹${data.salary}</span></p>
+            `;
+        } catch(e) {}
+    }
+
+    // PUNCH IN
+    async function punchIn() {
+        try {
+            const res = await fetch('/api/employee/attendance/punchin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({employeeId: String(employeeId)})
+            });
+            if(res.ok) {
+                document.getElementById('punchStatus').innerText = '🟢 Punched In at ' + new Date().toLocaleTimeString();
+                document.getElementById('attendanceMsg').innerHTML = '<div class="msg success">✅ Punch In recorded!</div>';
+                loadAttendance();
+            } else {
+                document.getElementById('attendanceMsg').innerHTML = '<div class="msg error">❌ Already punched in today!</div>';
+            }
+        } catch(e) {}
+    }
+
+    // PUNCH OUT
+    async function punchOut() {
+        try {
+            const res = await fetch('/api/employee/attendance/punchout', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({employeeId: String(employeeId)})
+            });
+            if(res.ok) {
+                document.getElementById('punchStatus').innerText = '🔴 Punched Out at ' + new Date().toLocaleTimeString();
+                document.getElementById('attendanceMsg').innerHTML = '<div class="msg success">✅ Punch Out recorded!</div>';
+                loadAttendance();
+            } else {
+                document.getElementById('attendanceMsg').innerHTML = '<div class="msg error">❌ Punch in first!</div>';
+            }
+        } catch(e) {}
+    }
+
+    // ATTENDANCE
+    async function loadAttendance() {
+        try {
+            const res = await fetch('/api/employee/attendance/' + employeeId);
+            const data = await res.json();
+            let html = '';
+            data.forEach(a => {
+                html += `<tr><td>${a.date}</td><td>${a.punchIn || '-'}</td><td>${a.punchOut || '-'}</td><td>${a.status}</td></tr>`;
+            });
+            document.getElementById('attendanceBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center">No records!</td></tr>';
+        } catch(e) {}
+    }
+
+    // LEAVE
+    async function applyLeave() {
+        const body = {
+            employeeId: String(employeeId),
+            fromDate: document.getElementById('fromDate').value,
+            toDate: document.getElementById('toDate').value,
+            reason: document.getElementById('reason').value
+        };
+        const res = await fetch('/api/employee/leave', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        if(res.ok) {
+            document.getElementById('leaveMsg').innerHTML = '<div class="msg success">✅ Leave applied!</div>';
+            loadLeaves();
+        }
+    }
+    async function loadLeaves() {
+        try {
+            const res = await fetch('/api/employee/leave/' + employeeId);
+            const data = await res.json();
+            let html = '';
+            let pendingCount = 0;
+            data.forEach(l => {
+                if(l.status === 'PENDING') pendingCount++;
+                const color = l.status === 'APPROVED' ? 'green' : l.status === 'REJECTED' ? 'red' : 'orange';
+                html += `<tr><td>${l.fromDate}</td><td>${l.toDate}</td><td>${l.reason}</td>
+                <td style="color:${color}; font-weight:bold">${l.status}</td></tr>`;
+            });
+            document.getElementById('leaveBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center">No leaves!</td></tr>';
+            document.getElementById('pendingCount').innerText = pendingCount > 0 ? '⏳ Pending Leaves: ' + pendingCount : '';
+        } catch(e) {}
+    }
+
+    // CHANGE PASSWORD
+    async function changePassword() {
+        const oldPass = document.getElementById('oldPass').value;
+        const newPass = document.getElementById('newPass').value;
+        const confirmPass = document.getElementById('confirmPass').value;
+        if(newPass !== confirmPass) {
+            document.getElementById('changePassMsg').innerHTML = '<div class="msg error">❌ Passwords do not match!</div>';
+            return;
+        }
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify({username: currentUsername, oldPassword: oldPass, newPassword: newPass})
+            });
+            if(res.ok) {
+                document.getElementById('changePassMsg').innerHTML = '<div class="msg success">✅ Password changed!</div>';
+            } else {
+                document.getElementById('changePassMsg').innerHTML = '<div class="msg error">❌ Wrong current password!</div>';
+            }
+        } catch(e) {}
+    }
+
+    // LOGOUT
+    function logout() {
+        token = ''; employeeId = ''; role = ''; currentUsername = '';
+        document.getElementById('loginSection').style.display = 'block';
+        document.getElementById('adminSection').style.display = 'none';
+        document.getElementById('employeeSection').style.display = 'none';
+        document.getElementById('navUser').innerText = '';
+        document.getElementById('lastLoginShow').innerText = '';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+    }
+</script>
+</body>
+</html>
